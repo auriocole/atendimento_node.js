@@ -11,7 +11,6 @@ module.exports = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(decoded.id);
-    console.log(req);
     if (user.role !== 'admin') {
       return res.status(403).json({ error: 'Acesso negado' });
     }

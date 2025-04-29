@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   const { username, password } = req.body;
-  //const role = req.body.role || 'user';
   try {
     const user = await User.create({ username, password });
     res.status(201).json({ message: 'Usuário criado', user: { id: user.id, username: user.username } });

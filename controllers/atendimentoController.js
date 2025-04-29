@@ -3,8 +3,16 @@ const { Atendimento } = require('../models');
 // Listar todos
 exports.getAll = async (req, res) => {
   const atendimentos = await Atendimento.findAll();
-  const totalItems = atendimentos.length;
-  res.json(atendimentos);
+  res.json(atendimentos.map(atendimento => {
+    return {
+      id: atendimento.id,
+      service: atendimento.service,
+      client: atendimento.client,
+      status: atendimento.status,
+      createdAt: atendimento.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
+      updatedAt: atendimento.updatedAt.toISOString().replace('T', ' ').replace('Z', ''),
+    };
+  }));
 };
 
 // Buscar por Id
