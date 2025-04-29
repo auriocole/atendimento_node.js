@@ -92,8 +92,12 @@ The API is documented using Swagger. You can access the documentation at: https:
    ```sh
    npm install
 3. Create a .env file with the required environment variables.
-4. Start the server: npm start
-5. For development: use: npm run dev 
+4. Start the server: 
+   ```sh
+   npm start
+5. For development: use: 
+   ```sh
+   npm run dev 
 
 ### Database Synchronization
 
