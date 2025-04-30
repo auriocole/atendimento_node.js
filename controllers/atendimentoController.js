@@ -1,9 +1,10 @@
 const redisClient = require('../utils/cache');
 const { Atendimento } = require('../models');
 
+const cacheKey = 'atendimentos:all';
+
 // Listar todos
 exports.getAll = async (req, res) => {
-  const cacheKey = 'atendimentos:all';
 
   try {
     const cached = await redisClient.get(cacheKey);
@@ -16,16 +17,7 @@ exports.getAll = async (req, res) => {
 
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(atendimentos));
 
-    res.json(atendimentos.map(atendimento => {
-      return {
-        id: atendimento.id,
-        service: atendimento.service,
-        client: atendimento.client,
-        status: atendimento.status,
-        createdAt: atendimento.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
-        updatedAt: atendimento.updatedAt.toISOString().replace('T', ' ').replace('Z', ''),
-      };
-    }));
+    res.json(atendimentos);
     
   } catch (error) {
     return res.status(500).json({ error: 'Erro ao buscar atendimentos' });
@@ -41,17 +33,39 @@ exports.getById = async (req, res) => {
 
 // Criar novo
 exports.create = async (req, res) => {
-  const novo = await Atendimento.create(req.body);
-  res.status(201).json(novo);
+
+  try {
+    const cached = await redisClient.get(cacheKey);
+    
+    if (cached) {
+      await redisClient.del(cacheKey);
+    }
+    
+    const novo = await Atendimento.create(req.body);
+    res.status(201).json(novo);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao criar atendimento' }); 
+  }
 };
 
 // Atualizar
 exports.update = async (req, res) => {
-  const atendimento = await Atendimento.findByPk(req.params.id);
-  if (!atendimento) return res.status(404).json({ message: 'Atendimento não encontrado' });
 
-  await atendimento.update(req.body);
-  res.json(atendimento);
+  try {
+    const cached = await redisClient.get(cacheKey);
+    
+    if (cached) {
+      await redisClient.del(cacheKey);
+    }
+
+    const atendimento = await Atendimento.findByPk(req.params.id);
+    if (!atendimento) return res.status(404).json({ message: 'Atendimento não encontrado' });
+
+    await atendimento.update(req.body);
+    res.json(atendimento);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao atualizar atendimento' });
+  }
 };
 
 // Deletar
