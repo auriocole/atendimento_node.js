@@ -1,18 +1,35 @@
+const redisClient = require('../utils/cache');
 const { Atendimento } = require('../models');
 
 // Listar todos
 exports.getAll = async (req, res) => {
-  const atendimentos = await Atendimento.findAll();
-  res.json(atendimentos.map(atendimento => {
-    return {
-      id: atendimento.id,
-      service: atendimento.service,
-      client: atendimento.client,
-      status: atendimento.status,
-      createdAt: atendimento.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
-      updatedAt: atendimento.updatedAt.toISOString().replace('T', ' ').replace('Z', ''),
-    };
-  }));
+  const cacheKey = 'atendimentos:all';
+
+  try {
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      return res.json(JSON.parse(cached));
+    }
+
+    const atendimentos = await Atendimento.findAll();
+
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(atendimentos));
+
+    res.json(atendimentos.map(atendimento => {
+      return {
+        id: atendimento.id,
+        service: atendimento.service,
+        client: atendimento.client,
+        status: atendimento.status,
+        createdAt: atendimento.createdAt.toISOString().replace('T', ' ').replace('Z', ''),
+        updatedAt: atendimento.updatedAt.toISOString().replace('T', ' ').replace('Z', ''),
+      };
+    }));
+    
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao buscar atendimentos' });
+  }
 };
 
 // Buscar por Id
